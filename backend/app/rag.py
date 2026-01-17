@@ -98,8 +98,10 @@ def index_text(text: str, metadata: dict = None):
         # Generate explicit IDs to ensure uniqueness and traceability
         ids = [str(uuid.uuid4()) for _ in unique_chunks]
         
-        # Create metadata list
-        metadatas_list = [metadata] * len(unique_chunks) if metadata else None
+        # Create metadata list with COPIES to avoid shared reference bug
+        # If we use [metadata]*len, it references the SAME dict, so when LangChain adds 'text' field,
+        # it overwrites it for ALL chunks!
+        metadatas_list = [metadata.copy() for _ in unique_chunks] if metadata else None
         
         print(f"[RAG] Adding {len(unique_chunks)} chunks to Pinecone")
         print(f"[RAG] Chunk IDs: {ids}")
