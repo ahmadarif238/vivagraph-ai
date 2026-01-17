@@ -130,6 +130,6 @@ For the technical recruiters watching: This isn't a toy. It's built with the fas
 
 **[Star this Repo 🌟](#)** if you want to ace your next interview!
 
-<i>Built by [Arif Ahmad Khan]</i>
+<i>Developed by Arif Ahmad Khan</i>
 
 </div>
