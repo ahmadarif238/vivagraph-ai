@@ -41,12 +41,19 @@ def retrieve_context(query: str, k: int = 3, session_id: str = None):
 
 def index_text(text: str, metadata: dict = None):
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1500,      # Increased for better context
-        chunk_overlap=100,    # Reduced overlap to minimize duplicates
+        chunk_size=1500,
+        chunk_overlap=50,     # Further reduced overlap
         length_function=len,
-        separators=["\n\n", "\n", ". ", " ", ""]  # Better splitting on paragraphs/sentences
+        separators=["\n\n\n", "\n\n", "\n", ". ", " ", ""]  # Split on multiple newlines first
     )
     chunks = text_splitter.split_text(text)
+    
+    # Debug: Log all chunks before deduplication
+    print(f"\n[RAG] === Document Chunking Debug ===")
+    print(f"[RAG] Total document length: {len(text)} characters")
+    print(f"[RAG] Generated {len(chunks)} chunks")
+    for i, chunk in enumerate(chunks):
+        print(f"[RAG] Chunk {i}: {len(chunk)} chars, starts with: {chunk[:150]}...")
     
     # Deduplicate chunks (remove exact duplicates)
     unique_chunks = []
@@ -56,8 +63,11 @@ def index_text(text: str, metadata: dict = None):
         if chunk_hash not in seen:
             seen.add(chunk_hash)
             unique_chunks.append(chunk)
+        else:
+            print(f"[RAG] WARNING: Duplicate chunk detected and removed")
     
     print(f"[RAG] Indexing {len(unique_chunks)} unique chunks (from {len(chunks)} total)")
+    print(f"[RAG] === End Debug ===\n")
     
     vectorstore = get_vectorstore()
     if unique_chunks:
