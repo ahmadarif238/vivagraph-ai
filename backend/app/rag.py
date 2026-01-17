@@ -41,13 +41,27 @@ def retrieve_context(query: str, k: int = 3, session_id: str = None):
 
 def index_text(text: str, metadata: dict = None):
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200,
+        chunk_size=1500,      # Increased for better context
+        chunk_overlap=100,    # Reduced overlap to minimize duplicates
         length_function=len,
+        separators=["\n\n", "\n", ". ", " ", ""]  # Better splitting on paragraphs/sentences
     )
     chunks = text_splitter.split_text(text)
+    
+    # Deduplicate chunks (remove exact duplicates)
+    unique_chunks = []
+    seen = set()
+    for chunk in chunks:
+        chunk_hash = hash(chunk.strip())
+        if chunk_hash not in seen:
+            seen.add(chunk_hash)
+            unique_chunks.append(chunk)
+    
+    print(f"[RAG] Indexing {len(unique_chunks)} unique chunks (from {len(chunks)} total)")
+    
     vectorstore = get_vectorstore()
-    vectorstore.add_texts(chunks, metadatas=[metadata] * len(chunks) if metadata else None)
+    if unique_chunks:
+        vectorstore.add_texts(unique_chunks, metadatas=[metadata] * len(unique_chunks) if metadata else None)
 
 async def process_and_index_document(file_content: bytes, filename: str, metadata: dict = None):
     from pypdf import PdfReader
