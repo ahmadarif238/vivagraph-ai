@@ -238,6 +238,33 @@ async def submit_answer(request: AnswerRequest):
         "current_question": question
     }
 
+@app.get("/api/progress")
+async def get_progress(email: str):
+    try:
+        if not email:
+            raise HTTPException(status_code=400, detail="Email required")
+            
+        # 1. Get User ID
+        user_resp = supabase.table("users").select("id").eq("email", email).execute()
+        if not user_resp.data:
+            return {"history": [], "mastery": []} 
+            
+        user_id = user_resp.data[0]["id"]
+        
+        # 2. Get Sessions (Latest first)
+        sessions_resp = supabase.table("sessions").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+        
+        # 3. Get Topic Mastery
+        mastery_resp = supabase.table("topic_mastery").select("*").eq("user_id", user_id).execute()
+        
+        return {
+            "history": sessions_resp.data,
+            "mastery": mastery_resp.data
+        }
+    except Exception as e:
+        print(f"Error fetching progress: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/")
 def root():
     return {
