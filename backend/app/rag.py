@@ -25,7 +25,8 @@ def retrieve_context(query: str, k: int = 3, session_id: str = None):
         filter_dict = {"session_id": {"$eq": session_id}}
         print(f"[RAG] Retrieving with session filter: {filter_dict}")
         
-        # Request MORE than k to account for potential duplicatesraw_results = vectorstore.similarity_search(query, k=k*3, filter=filter_dict)
+        # Request MORE than k to account for potential duplicates
+        raw_results = vectorstore.similarity_search(query, k=k*3, filter=filter_dict)
         
         # Debug: Log what was retrieved with FULL content
         print(f"[RAG] Retrieved {len(raw_results)} raw documents for session {session_id}")
