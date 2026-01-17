@@ -67,10 +67,10 @@ def retrieve_context(query: str, k: int = 3, session_id: str = None):
 
 def index_text(text: str, metadata: dict = None):
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1500,
-        chunk_overlap=50,     # Further reduced overlap
+        chunk_size=800,        # Reduced to fit MiniLM-L6-v2 limit better (256 tokens)
+        chunk_overlap=50,
         length_function=len,
-        separators=["\n\n\n", "\n\n", "\n", ". ", " ", ""]  # Split on multiple newlines first
+        separators=["\n\n\n", "\n\n", "\n", ". ", " ", ""]
     )
     chunks = text_splitter.split_text(text)
     
@@ -78,8 +78,6 @@ def index_text(text: str, metadata: dict = None):
     print(f"\n[RAG] === Document Chunking Debug ===")
     print(f"[RAG] Total document length: {len(text)} characters")
     print(f"[RAG] Generated {len(chunks)} chunks")
-    for i, chunk in enumerate(chunks):
-        print(f"[RAG] Chunk {i}: {len(chunk)} chars, starts with: {chunk[:150]}...")
     
     # Deduplicate chunks (remove exact duplicates)
     unique_chunks = []
@@ -92,16 +90,23 @@ def index_text(text: str, metadata: dict = None):
         else:
             print(f"[RAG] WARNING: Duplicate chunk detected and removed")
     
-    print(f"[RAG] Indexing {len(unique_chunks)} unique chunks (from {len(chunks)} total)")
+    print(f"[RAG] Indexing {len(unique_chunks)} unique chunks")
     print(f"[RAG] Metadata being attached: {metadata}")
     print(f"[RAG] === End Debug ===\n")
     
     vectorstore = get_vectorstore()
     if unique_chunks:
+        import uuid
+        # Generate explicit IDs to ensure uniqueness and traceability
+        ids = [str(uuid.uuid4()) for _ in unique_chunks]
+        
         # Create metadata list
         metadatas_list = [metadata] * len(unique_chunks) if metadata else None
-        print(f"[RAG] Adding {len(unique_chunks)} chunks to Pinecone with metadata: {metadatas_list}")
-        vectorstore.add_texts(unique_chunks, metadatas=metadatas_list)
+        
+        print(f"[RAG] Adding {len(unique_chunks)} chunks to Pinecone")
+        print(f"[RAG] Chunk IDs: {ids}")
+        
+        vectorstore.add_texts(unique_chunks, metadatas=metadatas_list, ids=ids)
         print(f"[RAG] Successfully added chunks to Pinecone")
 
 async def process_and_index_document(file_content: bytes, filename: str, metadata: dict = None):
