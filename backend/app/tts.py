@@ -10,7 +10,7 @@ VOICE_MAP = {
     "Listener": "en-US-GuyNeural"          # Default for listener mode
 }
 
-OUTPUT_DIR = "static/audio"
+OUTPUT_DIR = "/tmp/audio"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 async def generate_speech_file(text: str, strictness: str) -> str:
