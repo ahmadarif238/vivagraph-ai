@@ -39,6 +39,9 @@ def examiner_agent(state: AgentState):
          # Include the last answer to find relevant follow-up context
          query += f" {history[-1]['content']}"
     
+    print(f"[EXAMINER] Generating question for topic: '{topic}'")
+    print(f"[EXAMINER] Using RAG query: '{query}'")
+    
     docs = retrieve_context(query, k=5, session_id=state.session_id)
     context = "\n\n".join([doc.page_content for doc in docs]) if docs else "General Knowledge"
 
