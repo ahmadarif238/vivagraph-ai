@@ -21,46 +21,40 @@ def retrieve_context(query: str, k: int = 3, session_id: str = None):
     
     # CRITICAL: Only retrieve documents from the CURRENT session
     if session_id:
-        # Use Pinecone's metadata filtering format
         filter_dict = {"session_id": {"$eq": session_id}}
         print(f"[RAG] Retrieving with session filter: {filter_dict}")
         
-        # Request MORE than k to account for potential duplicates
-        # Pinecone can return the same document multiple times if semantic score is high
-        raw_results = vectorstore.similarity_search(query, k=k*10, filter=filter_dict)
+        # Request significantly more documents to ensure diversity
+        # Pinecone often returns duplicates of high-scoring chunks
+        fetch_k = k * 10
+        raw_results = vectorstore.similarity_search(query, k=fetch_k, filter=filter_dict)
         
-        # Debug: Log what was retrieved with FULL content
-        print(f"[RAG] Retrieved {len(raw_results)} raw documents for session {session_id}")
+        print(f"[RAG] Retrieved {len(raw_results)} raw documents (requested {fetch_k})")
         
-        # DEDUPLICATE based on content hash
+        # Strict Deduplication
         seen_hashes = set()
         unique_results = []
-        duplicate_count = 0
         
         for doc in raw_results:
-            content_hash = hash(doc.page_content)
+            # Use content as the source of truth for uniqueness
+            content_hash = hash(doc.page_content.strip())
+            
             if content_hash not in seen_hashes:
                 seen_hashes.add(content_hash)
                 unique_results.append(doc)
-            else:
-                duplicate_count += 1
+            
+            # Stop once we have enough unique documents
+            if len(unique_results) >= k:
+                break
         
-        # Trim to requested k
-        results = unique_results[:k]
+        print(f"[RAG] Returning {len(unique_results)} unique documents after deduplication")
         
-        print(f"[RAG] After deduplication: {len(unique_results)} unique docs (removed {duplicate_count} duplicates)")
-        print(f"[RAG] Returning top {len(results)} documents")
-        
-        if results:
-            for i, doc in enumerate(results):
-                doc_session = doc.metadata.get("session_id", "NO_SESSION_ID")
-                content_hash = hash(doc.page_content)
-                print(f"[RAG] Doc {i}: session_id={doc_session}, hash={content_hash}")
-                print(f"[RAG] Doc {i} FULL CONTENT ({len(doc.page_content)} chars):")
-                print(f"[RAG] {doc.page_content}")
-                print(f"[RAG] --- End Doc {i} ---\n")
-        
-        return results
+        # Detailed Logging of Final Results
+        for i, doc in enumerate(unique_results):
+            content_preview = doc.page_content[:100].replace('\n', ' ')
+            print(f"[RAG] Final Doc {i}: {content_preview}...")
+            
+        return unique_results
     else:
         # If no session_id, don't retrieve anything to avoid contamination
         print("[RAG] WARNING: No session_id provided, returning empty results")
