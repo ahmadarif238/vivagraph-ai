@@ -26,7 +26,8 @@ def retrieve_context(query: str, k: int = 3, session_id: str = None):
         print(f"[RAG] Retrieving with session filter: {filter_dict}")
         
         # Request MORE than k to account for potential duplicates
-        raw_results = vectorstore.similarity_search(query, k=k*3, filter=filter_dict)
+        # Pinecone can return the same document multiple times if semantic score is high
+        raw_results = vectorstore.similarity_search(query, k=k*10, filter=filter_dict)
         
         # Debug: Log what was retrieved with FULL content
         print(f"[RAG] Retrieved {len(raw_results)} raw documents for session {session_id}")
