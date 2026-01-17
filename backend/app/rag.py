@@ -52,7 +52,8 @@ def retrieve_context(query: str, k: int = 3, session_id: str = None):
         # Detailed Logging of Final Results
         for i, doc in enumerate(unique_results):
             content_preview = doc.page_content[:100].replace('\n', ' ')
-            print(f"[RAG] Final Doc {i}: {content_preview}...")
+            doc_id = doc.metadata.get("id", "UNKNOWN_ID")  # Try to retrieve ID if stored in metadata
+            print(f"[RAG] Final Doc {i} (ID: {doc_id}): {content_preview}...")
             
         return unique_results
     else:
@@ -73,6 +74,8 @@ def index_text(text: str, metadata: dict = None):
     print(f"\n[RAG] === Document Chunking Debug ===")
     print(f"[RAG] Total document length: {len(text)} characters")
     print(f"[RAG] Generated {len(chunks)} chunks")
+    for i, chunk in enumerate(chunks):
+        print(f"[RAG] Chunk {i} ({len(chunk)} chars): {chunk[:100]}... [HASH: {hash(chunk.strip())}]")
     
     # Deduplicate chunks (remove exact duplicates)
     unique_chunks = []
