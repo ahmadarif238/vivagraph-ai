@@ -11,6 +11,8 @@
 [![React](https://img.shields.io/badge/React-Interactive_UI-61DAFB.svg?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
 [![Cerebras](https://img.shields.io/badge/Cerebras-Wafer_Scale-8000FF.svg?style=for-the-badge)](https://cerebras.net/)
 [![Groq](https://img.shields.io/badge/Groq-Realtime_Voice-F05032.svg?style=for-the-badge)](https://groq.com/)
+[![Pinecone](https://img.shields.io/badge/Pinecone-Vector_DB-000000.svg?style=for-the-badge&logo=pinecone&logoColor=white)](https://www.pinecone.io/)
+[![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E.svg?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 
 <br/>
 
@@ -88,6 +90,8 @@ For the technical recruiters watching: This isn't a toy. It's built with the fas
 *   **Groq LPU**: For instant, human-speed voice responses (<500ms).
 *   **Cerebras**: Wafer-scale computing for complex reasoning.
 *   **LangGraph**: Cyclic state management for complex agent behaviors.
+*   **Pinecone**: Serverless vector database for RAG (Retrieval-Augmented Generation) to store and retrieve document chunks with millisecond latency.
+*   **Supabase**: PostgreSQL-based backend for storing user sessions, chat history, and analytics with real-time capabilities.
 
 ---
 
