@@ -125,4 +125,5 @@ async def process_and_index_document(file_content: bytes, filename: str, metadat
             text = file_content.decode('latin-1')
             
     if text.strip():
+        print(f"[RAG] Raw Text Extracted ({len(text)} chars): {text[:500]}...")
         index_text(text, metadata)
