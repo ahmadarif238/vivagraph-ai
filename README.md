@@ -52,22 +52,22 @@ I didn't just wrap a chatbot. I built a **Cognitive Core**—a team of 7 special
 
 ```mermaid
 graph TD
-    User((You)) <--> |"Speaking..."| STT[Speech-to-Text (Ear)]
-    STT --> |"Transcript"| Strategy[🧠 Chief Examiner Agent]
+    User((You)) <--> |"Speaking..."| STT["Speech-to-Text Ear"]
+    STT --> |"Transcript"| Strategy["🧠 Chief Examiner Agent"]
     
     subgraph " The Agent Swarm"
-        Strategy --> |"Fact Check"| RAG[📚 Researcher Agent]
-        RAG --> |"Set Tone"| Examiner[🎓 Personality Agent]
-        Examiner --> |"Speak"| TTS[Text-to-Speech (Mouth)]
+        Strategy --> |"Fact Check"| RAG["📚 Researcher Agent"]
+        RAG --> |"Set Tone"| Examiner["🎓 Personality Agent"]
+        Examiner --> |"Speak"| TTS["Text-to-Speech Mouth"]
     end
     
     subgraph "Real-time Analysis"
-        STT --> |"Did you stutter?"| Analyst[📊 Psychology Agent]
-        Analyst --> |"Update Score"| Memory[💾 Session Database]
+        STT --> |"Did you stutter?"| Analyst["📊 Psychology Agent"]
+        Analyst --> |"Update Score"| Memory["💾 Session Database"]
     end
     
-    Strategy --> |"Session Over"| Coach[💡 Teacher Agent]
-    Coach --> Report[📄 Final Report Card]
+    Strategy --> |"Session Over"| Coach["💡 Teacher Agent"]
+    Coach --> Report["📄 Final Report Card"]
 ```
 
 ---
