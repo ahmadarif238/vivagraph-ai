@@ -26,12 +26,30 @@ def retrieve_context(query: str, k: int = 3, session_id: str = None):
         print(f"[RAG] Retrieving with session filter: {filter_dict}")
         results = vectorstore.similarity_search(query, k=k, filter=filter_dict)
         
-        # Debug: Log what was retrieved
+        # Debug: Log what was retrieved with FULL content
         print(f"[RAG] Retrieved {len(results)} documents for session {session_id}")
+        
+        seen_hashes = set()
+        duplicate_count = 0
+        
         if results:
             for i, doc in enumerate(results):
                 doc_session = doc.metadata.get("session_id", "NO_SESSION_ID")
-                print(f"[RAG] Doc {i}: session_id={doc_session}, preview={doc.page_content[:100]}")
+                content_hash = hash(doc.page_content)
+                is_duplicate = content_hash in seen_hashes
+                
+                if is_duplicate:
+                    duplicate_count += 1
+                    print(f"[RAG] Doc {i}: **DUPLICATE** (hash={content_hash})")
+                else:
+                    seen_hashes.add(content_hash)
+                    print(f"[RAG] Doc {i}: session_id={doc_session}, hash={content_hash}")
+                    print(f"[RAG] Doc {i} FULL CONTENT ({len(doc.page_content)} chars):")
+                    print(f"[RAG] {doc.page_content}")
+                    print(f"[RAG] --- End Doc {i} ---\n")
+        
+        if duplicate_count > 0:
+            print(f"[RAG] WARNING: Found {duplicate_count} duplicate documents in retrieval!")
         
         return results
     else:
