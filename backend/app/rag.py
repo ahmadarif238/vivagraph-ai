@@ -49,12 +49,6 @@ def retrieve_context(query: str, k: int = 3, session_id: str = None):
         
         print(f"[RAG] Returning {len(unique_results)} unique documents after deduplication")
         
-        # Detailed Logging of Final Results
-        for i, doc in enumerate(unique_results):
-            content_preview = doc.page_content[:100].replace('\n', ' ')
-            doc_id = doc.metadata.get("id", "UNKNOWN_ID")  # Try to retrieve ID if stored in metadata
-            print(f"[RAG] Final Doc {i} (ID: {doc_id}): {content_preview}...")
-            
         return unique_results
     else:
         # If no session_id, don't retrieve anything to avoid contamination
@@ -70,12 +64,6 @@ def index_text(text: str, metadata: dict = None):
     )
     chunks = text_splitter.split_text(text)
     
-    # Debug: Log all chunks before deduplication
-    print(f"\n[RAG] === Document Chunking Debug ===")
-    print(f"[RAG] Total document length: {len(text)} characters")
-    print(f"[RAG] Generated {len(chunks)} chunks")
-    for i, chunk in enumerate(chunks):
-        print(f"[RAG] Chunk {i} ({len(chunk)} chars): {chunk[:100]}... [HASH: {hash(chunk.strip())}]")
     
     # Deduplicate chunks (remove exact duplicates)
     unique_chunks = []
@@ -85,12 +73,8 @@ def index_text(text: str, metadata: dict = None):
         if chunk_hash not in seen:
             seen.add(chunk_hash)
             unique_chunks.append(chunk)
-        else:
-            print(f"[RAG] WARNING: Duplicate chunk detected and removed")
     
     print(f"[RAG] Indexing {len(unique_chunks)} unique chunks")
-    print(f"[RAG] Metadata being attached: {metadata}")
-    print(f"[RAG] === End Debug ===\n")
     
     vectorstore = get_vectorstore()
     if unique_chunks:
@@ -99,13 +83,9 @@ def index_text(text: str, metadata: dict = None):
         ids = [str(uuid.uuid4()) for _ in unique_chunks]
         
         # Create metadata list with COPIES to avoid shared reference bug
-        # If we use [metadata]*len, it references the SAME dict, so when LangChain adds 'text' field,
-        # it overwrites it for ALL chunks!
         metadatas_list = [metadata.copy() for _ in unique_chunks] if metadata else None
         
         print(f"[RAG] Adding {len(unique_chunks)} chunks to Pinecone")
-        print(f"[RAG] Chunk IDs: {ids}")
-        
         vectorstore.add_texts(unique_chunks, metadatas=metadatas_list, ids=ids)
         print(f"[RAG] Successfully added chunks to Pinecone")
 
@@ -130,5 +110,4 @@ async def process_and_index_document(file_content: bytes, filename: str, metadat
             text = file_content.decode('latin-1')
             
     if text.strip():
-        print(f"[RAG] Raw Text Extracted ({len(text)} chars): {text[:500]}...")
         index_text(text, metadata)
