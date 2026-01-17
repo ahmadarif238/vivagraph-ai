@@ -1,6 +1,6 @@
 <div align="center">
 
-![VivaGraph Logo](file:///C:/Users/Hamza%20Computer/.gemini/antigravity/brain/a6fac593-44d9-49c9-b2da-b01d09ebb57c/vivagraph_logo_1768653480825.png)
+![VivaGraph Logo](assets/logo.png)
 
 # VivaGraph AI
 ### Master Your Oral Exams & Presentations.
