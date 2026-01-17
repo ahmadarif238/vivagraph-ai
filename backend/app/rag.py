@@ -85,11 +85,16 @@ def index_text(text: str, metadata: dict = None):
             print(f"[RAG] WARNING: Duplicate chunk detected and removed")
     
     print(f"[RAG] Indexing {len(unique_chunks)} unique chunks (from {len(chunks)} total)")
+    print(f"[RAG] Metadata being attached: {metadata}")
     print(f"[RAG] === End Debug ===\n")
     
     vectorstore = get_vectorstore()
     if unique_chunks:
-        vectorstore.add_texts(unique_chunks, metadatas=[metadata] * len(unique_chunks) if metadata else None)
+        # Create metadata list
+        metadatas_list = [metadata] * len(unique_chunks) if metadata else None
+        print(f"[RAG] Adding {len(unique_chunks)} chunks to Pinecone with metadata: {metadatas_list}")
+        vectorstore.add_texts(unique_chunks, metadatas=metadatas_list)
+        print(f"[RAG] Successfully added chunks to Pinecone")
 
 async def process_and_index_document(file_content: bytes, filename: str, metadata: dict = None):
     from pypdf import PdfReader
