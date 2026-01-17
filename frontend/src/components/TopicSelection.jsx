@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
-import { BookOpen, User, Mail, Sparkles, AlertCircle, Loader2, Upload } from 'lucide-react';
+import { BookOpen, User, Mail, Sparkles, AlertCircle, Loader2, Upload, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const TopicSelection = ({ onStart }) => {
+const TopicSelection = ({ onStart, onShowProgress }) => {
     const [topic, setTopic] = useState('');
     const [strictness, setStrictness] = useState('Moderate');
     const [mode, setMode] = useState('viva');
@@ -141,7 +141,24 @@ const TopicSelection = ({ onStart }) => {
                         </div>
                     </div>
 
-                    {/* Email Section Removed as per request (Using Auto-Guest) */}
+                    {/* Email Input - Restored for Progress Tracking */}
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-white/70 ml-1">Your Email</label>
+                        <div className="relative group">
+                            <Mail className="absolute left-4 top-3.5 w-5 h-5 text-white/40 group-focus-within:text-cyan-400 transition-colors" />
+                            <input
+                                type="email"
+                                className="glass-input w-full pl-12"
+                                placeholder="name@example.com"
+                                value={email}
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    localStorage.setItem('viva_user_email', e.target.value);
+                                }}
+                                required
+                            />
+                        </div>
+                    </div>
 
                     <div className="space-y-2 md:col-span-2">
                         <label className="text-sm font-medium text-white/70 ml-1">Upload Material (Optional)</label>
@@ -177,8 +194,21 @@ const TopicSelection = ({ onStart }) => {
                         </>
                     )}
                 </motion.button>
-            </form>
-        </div>
+
+                <button
+                    type="button"
+                    onClick={() => {
+                        console.log("Progress button clicked"); // Debug
+                        if (onShowProgress) onShowProgress();
+                        else console.error("onShowProgress prop missing");
+                    }}
+                    className="w-full mt-2 text-sm text-cyan-400/60 hover:text-cyan-400 transition-colors flex items-center justify-center gap-2 py-2"
+                >
+                    <TrendingUp className="w-4 h-4" />
+                    View My Progress
+                </button>
+            </form >
+        </div >
     );
 };
 

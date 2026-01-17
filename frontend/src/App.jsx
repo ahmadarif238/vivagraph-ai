@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import TopicSelection from './components/TopicSelection';
 import VivaInterface from './components/VivaInterface';
 import FeedbackDisplay from './components/FeedbackDisplay';
+import ProgressDashboard from './components/ProgressDashboard';
 import { AnimatePresence, motion } from 'framer-motion';
 
 function App() {
   const [sessionData, setSessionData] = useState(null);
-  const [interviewState, setInterviewState] = useState('selection'); // selection, interview, feedback
+  const [interviewState, setInterviewState] = useState('selection'); // selection, interview, feedback, progress
   const [finalFeedback, setFinalFeedback] = useState(null);
 
   const handleStartSession = (data) => {
@@ -23,6 +24,10 @@ function App() {
     setInterviewState('selection');
     setSessionData(null);
     setFinalFeedback(null);
+  };
+
+  const handleShowProgress = () => {
+    setInterviewState('progress');
   };
 
   return (
@@ -61,7 +66,7 @@ function App() {
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.3 }}
             >
-              <TopicSelection onStart={handleStartSession} />
+              <TopicSelection onStart={handleStartSession} onShowProgress={handleShowProgress} />
             </motion.div>
           )}
 
@@ -91,6 +96,20 @@ function App() {
               <FeedbackDisplay
                 feedback={finalFeedback}
                 onHome={handleBackToSelection}
+              />
+            </motion.div>
+          )}
+
+          {interviewState === 'progress' && (
+            <motion.div
+              key="progress"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ProgressDashboard
+                onBack={handleBackToSelection}
               />
             </motion.div>
           )}

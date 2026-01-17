@@ -251,8 +251,8 @@ async def get_progress(email: str):
             
         user_id = user_resp.data[0]["id"]
         
-        # 2. Get Sessions (Latest first)
-        sessions_resp = supabase.table("sessions").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+        # 2. Get Sessions
+        sessions_resp = supabase.table("sessions").select("*").eq("user_id", user_id).order("start_time", desc=True).execute()
         
         # 3. Get Topic Mastery
         mastery_resp = supabase.table("topic_mastery").select("*").eq("user_id", user_id).execute()
