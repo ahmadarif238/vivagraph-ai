@@ -238,6 +238,22 @@ async def submit_answer(request: AnswerRequest):
         "current_question": question
     }
 
+@app.get("/")
+def root():
+    return {
+        "message": "VivaGraph AI Backend API",
+        "status": "running",
+        "version": "1.0.0",
+        "endpoints": {
+            "health": "/health",
+            "start_session": "/api/start",
+            "submit_answer": "/api/answer",
+            "end_interview": "/api/end",
+            "transcribe": "/api/transcribe",
+            "speak": "/api/speak"
+        }
+    }
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
