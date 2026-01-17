@@ -18,8 +18,26 @@ def get_vectorstore():
 
 def retrieve_context(query: str, k: int = 3, session_id: str = None):
     vectorstore = get_vectorstore()
-    filter_dict = {"session_id": session_id} if session_id else None
-    return vectorstore.similarity_search(query, k=k, filter=filter_dict)
+    
+    # CRITICAL: Only retrieve documents from the CURRENT session
+    if session_id:
+        # Use Pinecone's metadata filtering format
+        filter_dict = {"session_id": {"$eq": session_id}}
+        print(f"[RAG] Retrieving with session filter: {filter_dict}")
+        results = vectorstore.similarity_search(query, k=k, filter=filter_dict)
+        
+        # Debug: Log what was retrieved
+        print(f"[RAG] Retrieved {len(results)} documents for session {session_id}")
+        if results:
+            for i, doc in enumerate(results):
+                doc_session = doc.metadata.get("session_id", "NO_SESSION_ID")
+                print(f"[RAG] Doc {i}: session_id={doc_session}, preview={doc.page_content[:100]}")
+        
+        return results
+    else:
+        # If no session_id, don't retrieve anything to avoid contamination
+        print("[RAG] WARNING: No session_id provided, returning empty results")
+        return []
 
 def index_text(text: str, metadata: dict = None):
     text_splitter = RecursiveCharacterTextSplitter(
