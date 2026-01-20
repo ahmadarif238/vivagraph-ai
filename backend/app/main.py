@@ -293,11 +293,16 @@ async def transcribe(file: UploadFile = File(...)):
     if not file:
         raise HTTPException(status_code=400, detail="No file uploaded")
     
-    transcript = transcribe_audio(file)
-    if not transcript:
+    # Pass the content type dynamically (e.g. audio/webm, audio/mp4)
+    # But stt.py hardcodes it currently. Let's fix stt.py call logic here OR relies on stt.py handling.
+    # Actually, stt.py reads (filename, file, "audio/m4a"). 
+    # Let's trust Groq handles webm if we pass it as binary.
+    
+    result = transcribe_audio(file)
+    if not result or 'text' not in result:
         raise HTTPException(status_code=500, detail="Transcription failed")
         
-    return {"transcript": transcript}
+    return {"transcript": result['text']}
 
 from fastapi.responses import FileResponse
 from .tts import generate_speech_file

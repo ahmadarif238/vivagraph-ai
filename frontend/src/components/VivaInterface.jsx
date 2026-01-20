@@ -149,16 +149,27 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
     // State ref to access current value inside event listeners/closures
     const isRecordingRef = useRef(false);
 
-    // Initialize Speech Recognition
+    // Server-Side STT States
+    const [useServerSTT, setUseServerSTT] = useState(false);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+
+    // Initialize Speech Recognition (Client Side)
     useEffect(() => {
+        // Auto-enable Server STT on mobile by default for better reliability
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+            setUseServerSTT(true);
+        }
+
         let speech = null;
 
         // Browser compatibility check
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-        if (SpeechRecognition) {
+        if (SpeechRecognition && !useServerSTT) { // Only init if not forced to server mode
             speech = new SpeechRecognition();
-            speech.continuous = true; // Still try continuous
+            speech.continuous = true;
             speech.interimResults = true;
             speech.lang = 'en-US';
 
@@ -176,12 +187,17 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
 
             speech.onerror = (event) => {
                 console.error('Speech recognition error', event.error);
-                // Don't stop for 'no-speech' errors, just ignore them
                 if (event.error === 'no-speech') return;
 
                 if (event.error === 'not-allowed') {
                     setError('Microphone access denied. Please check your permissions.');
                 } else {
+                    // If client STT fails repeatedly, suggest Server Mode
+                    if (!useServerSTT) {
+                        setError(`Speech Error: ${event.error}. Switching to Server Mode for better reliability...`);
+                        setUseServerSTT(true); // Auto-switch fallback
+                        return;
+                    }
                     setError(`Speech Error: ${event.error}. Try tapping "Retake" or typing.`);
                 }
 
@@ -194,7 +210,7 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
 
             // Vital for Mobile: Android Chrome stops automatically. We must restart it.
             speech.onend = () => {
-                if (isRecordingRef.current) {
+                if (isRecordingRef.current && !useServerSTT) {
                     try {
                         console.log("Speech engine stopped, restarting...");
                         speech.start();
@@ -208,9 +224,8 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
             };
 
             setRecognition(speech);
-        } else {
+        } else if (!SpeechRecognition && !useServerSTT) {
             // Check if user is likely on a mobile WebView (like LinkedIn app)
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             const isWebView = /(LinkedInApp|FBAN|FBAV)/.test(navigator.userAgent);
 
             if (isMobile && isWebView) {
@@ -223,14 +238,15 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
         return () => {
             stopVisualizer();
             audioContextRef.current?.close();
+            // Cleanup
             if (speech) {
-                speech.onend = null; // Prevent restart loop on unmount
+                speech.onend = null;
                 speech.stop();
             }
         };
-    }, []);
+    }, [useServerSTT]); // Re-run if mode changes
 
-    const startRecording = () => {
+    const startRecording = async () => {
         setTranscript('');
         setError('');
         window.speechSynthesis.cancel();
@@ -239,21 +255,73 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
         isRecordingRef.current = true; // Sync ref
 
         try {
-            recognition?.start();
-            startVisualizer();
+            if (useServerSTT) {
+                // Server-Side Logic (MediaRecorder)
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorderRef.current = new MediaRecorder(stream); // Default mimeType usually works
+                audioChunksRef.current = [];
+
+                mediaRecorderRef.current.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunksRef.current.push(event.data);
+                    }
+                };
+
+                mediaRecorderRef.current.start();
+                startVisualizer(stream); // Reuse stream for visualizer
+            } else {
+                // Client-Side Logic
+                recognition?.start();
+                startVisualizer();
+            }
         } catch (e) {
             console.error("Start error:", e);
-            setError("Could not start microphone. Refresh and try again.");
+            setError("Could not start microphone. Check permissions.");
             setIsRecording(false);
             isRecordingRef.current = false;
         }
     };
 
-    const stopRecording = () => {
+    const stopRecording = async () => {
         setIsRecording(false);
         isRecordingRef.current = false; // Sync ref
-        recognition?.stop();
+
         stopVisualizer();
+
+        if (useServerSTT) {
+            // Stop MediaRecorder and Send
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                mediaRecorderRef.current.stop();
+
+                // Wait for the "stop" event which means data is ready
+                mediaRecorderRef.current.onstop = async () => {
+                    const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' }); // webm is standard for MediaRecorder
+                    setLoading(true); // Show spinner while transcribing
+
+                    try {
+                        const formData = new FormData();
+                        formData.append("file", audioBlob, "recording.webm");
+
+                        const response = await axios.post(`${API_BASE_URL}/api/transcribe`, formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' }
+                        });
+
+                        if (response.data.transcript) {
+                            setTranscript(response.data.transcript);
+                        }
+                    } catch (err) {
+                        console.error("Transcription failed", err);
+                        setError("Detailed transcription failed. Please try again or type your answer.");
+                    } finally {
+                        setLoading(false);
+                        // Stop tracks
+                        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+                    }
+                };
+            }
+        } else {
+            recognition?.stop();
+        }
     };
 
     const handleRetake = () => {
