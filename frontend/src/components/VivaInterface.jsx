@@ -46,6 +46,9 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
         } catch (err) {
             console.error("TTS Error:", err);
             setSpeaking(false);
+            if (err.name === 'NotAllowedError') {
+                setError('Autoplay blocked. Tap the speaker icon to hear the question.');
+            }
         }
     };
 
@@ -173,7 +176,15 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
 
             setRecognition(speech);
         } else {
-            setError('Web Speech API not supported in this browser. Please use Chrome.');
+            // Check if user is likely on a mobile WebView (like LinkedIn app)
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            const isWebView = /(LinkedInApp|FBAN|FBAV)/.test(navigator.userAgent);
+
+            if (isMobile && isWebView) {
+                setError('Voice features may not work inside this app. Please tap "..." and select "Open in Chrome/Browser".');
+            } else {
+                setError('Voice recognition not supported. Please use Google Chrome or Microsoft Edge.');
+            }
         }
 
         return () => {
