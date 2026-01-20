@@ -146,11 +146,19 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
         }
     };
 
+    // State ref to access current value inside event listeners/closures
+    const isRecordingRef = useRef(false);
+
     // Initialize Speech Recognition
     useEffect(() => {
-        if ('webkitSpeechRecognition' in window) {
-            const speech = new window.webkitSpeechRecognition();
-            speech.continuous = true;
+        let speech = null;
+
+        // Browser compatibility check
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (SpeechRecognition) {
+            speech = new SpeechRecognition();
+            speech.continuous = true; // Still try continuous
             speech.interimResults = true;
             speech.lang = 'en-US';
 
@@ -168,10 +176,35 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
 
             speech.onerror = (event) => {
                 console.error('Speech recognition error', event.error);
+                // Don't stop for 'no-speech' errors, just ignore them
+                if (event.error === 'no-speech') return;
+
                 if (event.error === 'not-allowed') {
                     setError('Microphone access denied. Please check your permissions.');
+                } else {
+                    setError(`Speech Error: ${event.error}. Try tapping "Retake" or typing.`);
                 }
-                setIsRecording(false);
+
+                // For other fatal errors, stop
+                if (event.error !== 'network') { // Network errors might be transient
+                    setIsRecording(false);
+                    isRecordingRef.current = false;
+                }
+            };
+
+            // Vital for Mobile: Android Chrome stops automatically. We must restart it.
+            speech.onend = () => {
+                if (isRecordingRef.current) {
+                    try {
+                        console.log("Speech engine stopped, restarting...");
+                        speech.start();
+                    } catch (e) {
+                        console.error("Failed to restart speech:", e);
+                        // If restart fails, then we actually stop
+                        setIsRecording(false);
+                        isRecordingRef.current = false;
+                    }
+                }
             };
 
             setRecognition(speech);
@@ -190,6 +223,10 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
         return () => {
             stopVisualizer();
             audioContextRef.current?.close();
+            if (speech) {
+                speech.onend = null; // Prevent restart loop on unmount
+                speech.stop();
+            }
         };
     }, []);
 
@@ -197,13 +234,24 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
         setTranscript('');
         setError('');
         window.speechSynthesis.cancel();
+
         setIsRecording(true);
-        recognition?.start();
-        startVisualizer();
+        isRecordingRef.current = true; // Sync ref
+
+        try {
+            recognition?.start();
+            startVisualizer();
+        } catch (e) {
+            console.error("Start error:", e);
+            setError("Could not start microphone. Refresh and try again.");
+            setIsRecording(false);
+            isRecordingRef.current = false;
+        }
     };
 
     const stopRecording = () => {
         setIsRecording(false);
+        isRecordingRef.current = false; // Sync ref
         recognition?.stop();
         stopVisualizer();
     };
