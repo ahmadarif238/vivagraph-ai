@@ -574,6 +574,9 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
                     )}
                 </AnimatePresence>
             </div>
+            <div className="text-xs text-white/30 text-center mt-4 font-mono">
+                Mode: {useServerSTT ? "Server (High Quality)" : "Device (Fast)"} {isProcessingAudio ? "• Processing..." : ""} • v2.1
+            </div>
         </div>
     );
 };
