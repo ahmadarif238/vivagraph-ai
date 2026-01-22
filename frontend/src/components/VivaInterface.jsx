@@ -149,6 +149,9 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
     // State ref to access current value inside event listeners/closures
     const isRecordingRef = useRef(false);
 
+    // Add a new state for audio processing specifically (distinct from general loading)
+    const [isProcessingAudio, setIsProcessingAudio] = useState(false);
+
     // Server-Side STT States
     const [useServerSTT, setUseServerSTT] = useState(false);
     const mediaRecorderRef = useRef(null);
@@ -302,6 +305,7 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
             // Stop MediaRecorder and Send
             if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
                 console.log("Stopping MediaRecorder..."); // Debug check
+                setIsProcessingAudio(true); // <--- START PROCESSING STATE
 
                 // CRITICAL FIX: Assign handler BEFORE calling stop to avoid race condition
                 mediaRecorderRef.current.onstop = async () => {
@@ -314,6 +318,7 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
 
                     if (audioBlob.size < 100) {
                         setError("Recording was empty. Please speak louder or check microphone.");
+                        setIsProcessingAudio(false);
                         return;
                     }
 
@@ -337,6 +342,7 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
                         setError(`Server Error: ${err.message}. (Size: ${audioBlob.size})`);
                     } finally {
                         setLoading(false);
+                        setIsProcessingAudio(false); // <--- END PROCESSING STATE
                         // Stop tracks
                         if (mediaRecorderRef.current.stream) {
                             mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
@@ -490,15 +496,25 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
 
-                    {!isRecording && !transcript && (
+                    {isProcessingAudio ? (
                         <button
-                            onClick={startRecording}
-                            disabled={loading}
-                            className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/25 transition-all transform hover:scale-105"
+                            disabled
+                            className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-semibold bg-white/10 text-white/80 transition-all cursor-not-allowed"
                         >
-                            <Mic className="w-6 h-6" />
-                            <span>Tap to Speak</span>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <span>Processing Audio...</span>
                         </button>
+                    ) : (
+                        !isRecording && !transcript && (
+                            <button
+                                onClick={startRecording}
+                                disabled={loading}
+                                className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/25 transition-all transform hover:scale-105"
+                            >
+                                <Mic className="w-6 h-6" />
+                                <span>Tap to Speak</span>
+                            </button>
+                        )
                     )}
 
                     {isRecording && (
