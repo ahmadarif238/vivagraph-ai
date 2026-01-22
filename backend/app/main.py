@@ -196,9 +196,11 @@ async def submit_answer(request: AnswerRequest):
     history.append({"role": "human", "content": request.transcript})
     
     # 3. Update state with the new history AND answer_id
+    # CRITICAL SAFEGUARD: Re-inject session_id to ensure RAG works even if state lost it
     app_graph.update_state(thread, {
         "history": history, 
-        "current_answer_id": answer_id
+        "current_answer_id": answer_id,
+        "session_id": session_id 
     })
     
     # 4. Resume graph execution
