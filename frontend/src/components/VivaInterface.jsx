@@ -250,15 +250,15 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
         setTranscript('');
         setError('');
         window.speechSynthesis.cancel();
-        
+
         setIsRecording(true);
         isRecordingRef.current = true; // Sync ref
-        
+
         try {
             if (useServerSTT) {
                 // Server-Side Logic (MediaRecorder)
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
+
                 // Determine supported mimeType (Prioritize MP4 for mobile compatibility (iOS), then WebM)
                 let mimeType = 'audio/webm';
                 if (MediaRecorder.isTypeSupported('audio/mp4')) {
@@ -266,7 +266,7 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
                 } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
                     mimeType = 'audio/webm;codecs=opus';
                 }
-                
+
                 console.log(`Using MIME Type: ${mimeType}`);
                 mediaRecorderRef.current = new MediaRecorder(stream, { mimeType });
                 audioChunksRef.current = [];
@@ -276,7 +276,7 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
                         audioChunksRef.current.push(event.data);
                     }
                 };
-                
+
                 mediaRecorderRef.current.start();
                 startVisualizer(stream); // Reuse stream for visualizer
             } else {
@@ -284,7 +284,7 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
                 recognition?.start();
                 startVisualizer();
             }
-        } catch(e) {
+        } catch (e) {
             console.error("Start error:", e);
             setError("Could not start microphone. Check permissions.");
             setIsRecording(false);
@@ -295,52 +295,56 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
     const stopRecording = async () => {
         setIsRecording(false);
         isRecordingRef.current = false; // Sync ref
-        
+
         stopVisualizer();
 
         if (useServerSTT) {
             // Stop MediaRecorder and Send
             if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-                mediaRecorderRef.current.stop();
-                
-                // Wait for the "stop" event which means data is ready
-                mediaRecorderRef.current.onstop = async () => {
-                     // Use the SAME mimeType as creation
-                     const mimeType = mediaRecorderRef.current.mimeType;
-                     const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-                     const extension = mimeType.includes('mp4') ? 'mp4' : 'webm';
-                     
-                     console.log(`Blob created: ${audioBlob.size} bytes, type: ${mimeType}`);
-                     
-                     if (audioBlob.size < 100) {
-                         setError("Recording was empty. Please speak louder or check microphone.");
-                         return;
-                     }
+                console.log("Stopping MediaRecorder..."); // Debug check
 
-                     setLoading(true); // Show spinner while transcribing
-                     
-                     try {
-                         const formData = new FormData();
-                         formData.append("file", audioBlob, `recording.${extension}`);
-                         
-                         const response = await axios.post(`${API_BASE_URL}/api/transcribe`, formData, {
-                             headers: { 'Content-Type': 'multipart/form-data' }
-                         });
-                         
-                         if(response.data.transcript) {
-                             setTranscript(response.data.transcript);
-                         } else {
-                             setError("No speech returned from server.");
-                         }
-                     } catch(err) {
-                         console.error("Transcription failed", err);
-                         setError(`Server Error: ${err.message}. (Size: ${audioBlob.size})`);
-                     } finally {
-                         setLoading(false);
-                         // Stop tracks
-                         mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-                     }
+                // CRITICAL FIX: Assign handler BEFORE calling stop to avoid race condition
+                mediaRecorderRef.current.onstop = async () => {
+                    // Use the SAME mimeType as creation
+                    const mimeType = mediaRecorderRef.current.mimeType;
+                    const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+                    const extension = mimeType.includes('mp4') ? 'mp4' : 'webm';
+
+                    console.log(`Blob created: ${audioBlob.size} bytes, type: ${mimeType}`);
+
+                    if (audioBlob.size < 100) {
+                        setError("Recording was empty. Please speak louder or check microphone.");
+                        return;
+                    }
+
+                    setLoading(true); // Show spinner while transcribing
+
+                    try {
+                        const formData = new FormData();
+                        formData.append("file", audioBlob, `recording.${extension}`);
+
+                        const response = await axios.post(`${API_BASE_URL}/api/transcribe`, formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' }
+                        });
+
+                        if (response.data.transcript) {
+                            setTranscript(response.data.transcript);
+                        } else {
+                            setError("No speech returned from server.");
+                        }
+                    } catch (err) {
+                        console.error("Transcription failed", err);
+                        setError(`Server Error: ${err.message}. (Size: ${audioBlob.size})`);
+                    } finally {
+                        setLoading(false);
+                        // Stop tracks
+                        if (mediaRecorderRef.current.stream) {
+                            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+                        }
+                    }
                 };
+
+                mediaRecorderRef.current.stop();
             }
         } else {
             recognition?.stop();
