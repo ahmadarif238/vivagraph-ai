@@ -34,8 +34,8 @@ function App() {
     <div className="min-h-screen relative flex items-center justify-center p-4 sm:p-8">
       {/* Background Ambience */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-700/20 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-700/20 rounded-full blur-[100px] animate-pulse delay-1000" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent-deep/20 rounded-full blur-[100px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-accent-deep/20 rounded-full blur-[100px] animate-pulse delay-1000" />
       </div>
 
       <div className="w-full max-w-4xl z-10">

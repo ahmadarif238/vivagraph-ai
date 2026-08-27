@@ -43,14 +43,14 @@ const ProgressDashboard = ({ onBack }) => {
                     <ArrowLeft className="w-6 h-6 text-white" />
                 </button>
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <TrendingUp className="w-6 h-6 text-cyan-400" />
+                    <TrendingUp className="w-6 h-6 text-accent-bright" />
                     My Progress
                 </h2>
             </div>
 
             {loading ? (
                 <div className="flex justify-center py-12">
-                    <Loader2 className="w-8 h-8 text-cyan-400 animate-spin" />
+                    <Loader2 className="w-8 h-8 text-accent-bright animate-spin" />
                 </div>
             ) : error ? (
                 <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-200">
@@ -62,7 +62,7 @@ const ProgressDashboard = ({ onBack }) => {
                     {/* Mastery Section */}
                     <section>
                         <h3 className="text-lg font-semibold text-white/80 mb-4 flex items-center gap-2">
-                            <Award className="w-5 h-5 text-purple-400" />
+                            <Award className="w-5 h-5 text-accent-bright" />
                             Skill Mastery
                         </h3>
                         {data.mastery.length === 0 ? (
@@ -73,11 +73,11 @@ const ProgressDashboard = ({ onBack }) => {
                                     <div key={idx} className="bg-white/5 p-4 rounded-xl border border-white/10">
                                         <div className="flex justify-between items-center mb-2">
                                             <span className="text-white font-medium">{item.topic}</span>
-                                            <span className="text-cyan-400 font-bold">{item.mastery_level}%</span>
+                                            <span className="text-accent-bright font-bold">{item.mastery_level}%</span>
                                         </div>
                                         <div className="w-full bg-black/30 rounded-full h-2">
                                             <div
-                                                className="bg-cyan-500 h-2 rounded-full transition-all duration-1000"
+                                                className="bg-accent h-2 rounded-full transition-all duration-1000"
                                                 style={{ width: `${item.mastery_level}%` }}
                                             />
                                         </div>
@@ -107,7 +107,7 @@ const ProgressDashboard = ({ onBack }) => {
                                         </div>
                                         {/* Placeholder for future score/feedback summary if available in session record */}
                                         <div className="text-right">
-                                            <span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-xs border border-cyan-500/20">
+                                            <span className="px-3 py-1 rounded-full bg-accent/10 text-accent-bright text-xs border border-accent/20">
                                                 Completed
                                             </span>
                                         </div>

@@ -57,7 +57,7 @@ const TopicSelection = ({ onStart, onShowProgress }) => {
     return (
         <div className="glass-card p-8 md:p-10">
             <div className="flex items-center gap-3 mb-6">
-                <Sparkles className="w-6 h-6 text-cyan-400" />
+                <Sparkles className="w-6 h-6 text-accent-bright" />
                 <h2 className="text-2xl font-semibold text-white">Start Your Viva</h2>
             </div>
 
@@ -76,7 +76,7 @@ const TopicSelection = ({ onStart, onShowProgress }) => {
                 <div className="space-y-2">
                     <label className="text-sm font-medium text-white/70 ml-1">Topic or Subject</label>
                     <div className="relative group">
-                        <BookOpen className="absolute left-4 top-3.5 w-5 h-5 text-white/40 group-focus-within:text-cyan-400 transition-colors" />
+                        <BookOpen className="absolute left-4 top-3.5 w-5 h-5 text-white/40 group-focus-within:text-accent-bright transition-colors" />
                         <input
                             type="text"
                             className="glass-input w-full pl-12"
@@ -94,7 +94,7 @@ const TopicSelection = ({ onStart, onShowProgress }) => {
                     <div className="flex bg-black/20 p-1 rounded-xl border border-white/5 relative">
                         {/* Slider Background */}
                         <motion.div
-                            className="absolute top-1 bottom-1 bg-cyan-500/20 rounded-lg border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
+                            className="absolute top-1 bottom-1 bg-accent/20 rounded-lg border border-accent/30 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
                             initial={false}
                             animate={{
                                 x: mode === 'viva' ? 0 : '100%',
@@ -134,9 +134,9 @@ const TopicSelection = ({ onStart, onShowProgress }) => {
                                 value={strictness}
                                 onChange={(e) => setStrictness(e.target.value)}
                             >
-                                <option className="bg-gray-900 text-white" value="Easy">Easy (Supportive)</option>
-                                <option className="bg-gray-900 text-white" value="Moderate">Moderate (Standard)</option>
-                                <option className="bg-gray-900 text-white" value="Strict">Strict (Challenging)</option>
+                                <option className="bg-surface text-white" value="Easy">Easy (Supportive)</option>
+                                <option className="bg-surface text-white" value="Moderate">Moderate (Standard)</option>
+                                <option className="bg-surface text-white" value="Strict">Strict (Challenging)</option>
                             </select>
                         </div>
                     </div>
@@ -145,7 +145,7 @@ const TopicSelection = ({ onStart, onShowProgress }) => {
                     <div className="space-y-2">
                         <label className="text-sm font-medium text-white/70 ml-1">Your Email</label>
                         <div className="relative group">
-                            <Mail className="absolute left-4 top-3.5 w-5 h-5 text-white/40 group-focus-within:text-cyan-400 transition-colors" />
+                            <Mail className="absolute left-4 top-3.5 w-5 h-5 text-white/40 group-focus-within:text-accent-bright transition-colors" />
                             <input
                                 type="email"
                                 className="glass-input w-full pl-12"
@@ -163,11 +163,11 @@ const TopicSelection = ({ onStart, onShowProgress }) => {
                     <div className="space-y-2 md:col-span-2">
                         <label className="text-sm font-medium text-white/70 ml-1">Upload Material (Optional)</label>
                         <div className="relative group">
-                            <Upload className="absolute left-4 top-3.5 w-5 h-5 text-white/40 group-focus-within:text-cyan-400 transition-colors" />
+                            <Upload className="absolute left-4 top-3.5 w-5 h-5 text-white/40 group-focus-within:text-accent-bright transition-colors" />
                             <input
                                 type="file"
                                 accept=".pdf,.txt"
-                                className="glass-input w-full pl-12 py-2.5 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-500/20 file:text-cyan-400 hover:file:bg-cyan-500/30"
+                                className="glass-input w-full pl-12 py-2.5 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-accent/20 file:text-accent-bright hover:file:bg-accent/30"
                                 onChange={(e) => setFile(e.target.files[0])}
                             />
                         </div>
@@ -180,7 +180,7 @@ const TopicSelection = ({ onStart, onShowProgress }) => {
                     whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={loading}
-                    className="w-full glass-button bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-500/30 text-cyan-100 py-4 mt-4 flex items-center justify-center gap-2 group"
+                    className="w-full glass-button bg-accent/20 hover:bg-accent/30 border-accent/30 text-accent-bright py-4 mt-4 flex items-center justify-center gap-2 group"
                 >
                     {loading ? (
                         <>
@@ -202,7 +202,7 @@ const TopicSelection = ({ onStart, onShowProgress }) => {
                         if (onShowProgress) onShowProgress();
                         else console.error("onShowProgress prop missing");
                     }}
-                    className="w-full mt-2 text-sm text-cyan-400/60 hover:text-cyan-400 transition-colors flex items-center justify-center gap-2 py-2"
+                    className="w-full mt-2 text-sm text-accent-bright/60 hover:text-accent-bright transition-colors flex items-center justify-center gap-2 py-2"
                 >
                     <TrendingUp className="w-4 h-4" />
                     View My Progress

@@ -24,7 +24,7 @@ const FeedbackDisplay = ({ feedback, onHome }) => {
                     <h2 className="text-3xl font-bold text-white mb-2">Viva Completed!</h2>
                     <p className="text-white/60">Legacy Report Format</p>
                 </div>
-                <div className="glass-card bg-black/20 p-6 md:p-8 prose prose-invert max-w-none prose-headings:text-cyan-400">
+                <div className="glass-card bg-black/20 p-6 md:p-8 prose prose-invert max-w-none prose-headings:text-accent-bright">
                     <ReactMarkdown>{feedback}</ReactMarkdown>
                 </div>
                 <div className="flex justify-center pt-8">
@@ -60,7 +60,7 @@ const FeedbackDisplay = ({ feedback, onHome }) => {
                 className="text-center space-y-4"
             >
                 <div className="inline-block relative">
-                    <div className="absolute inset-0 bg-cyan-500/20 blur-xl rounded-full" />
+                    <div className="absolute inset-0 bg-accent/20 blur-xl rounded-full" />
                     <div className={`relative w-24 h-24 rounded-full flex items-center justify-center border-4 ${data.overall_score >= 7 ? 'border-green-400 text-green-400' : 'border-orange-400 text-orange-400'} bg-black/40 text-4xl font-bold shadow-2xl`}>
                         {data.overall_score}<span className="text-lg text-white/40 font-normal">/10</span>
                     </div>
@@ -116,7 +116,7 @@ const FeedbackDisplay = ({ feedback, onHome }) => {
                 {/* Improvement Tips - Full Width */}
                 <motion.div variants={itemVariants} className="glass-card p-6 md:col-span-2 border-t-4 border-t-blue-500/50">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                        <div className="p-2 bg-accent/10 rounded-lg text-accent-bright">
                             <TrendingUp className="w-6 h-6" />
                         </div>
                         <h3 className="text-xl font-semibold text-white">Action Plan</h3>
@@ -134,7 +134,7 @@ const FeedbackDisplay = ({ feedback, onHome }) => {
                 {/* Resources */}
                 <motion.div variants={itemVariants} className="glass-card p-6 md:col-span-2">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400">
+                        <div className="p-2 bg-accent/10 rounded-lg text-accent-bright">
                             <BookOpen className="w-6 h-6" />
                         </div>
                         <h3 className="text-xl font-semibold text-white">Recommended Resources</h3>
@@ -146,13 +146,13 @@ const FeedbackDisplay = ({ feedback, onHome }) => {
                                 href={res.link !== "#" ? res.link : undefined}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/5 hover:border-purple-500/30 hover:bg-white/10 transition-all group cursor-pointer"
+                                className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/5 hover:border-accent/30 hover:bg-white/10 transition-all group cursor-pointer"
                             >
-                                <div className="h-10 w-10 rounded-lg bg-black/30 flex items-center justify-center text-white/40 group-hover:text-purple-400 transition-colors">
+                                <div className="h-10 w-10 rounded-lg bg-black/30 flex items-center justify-center text-white/40 group-hover:text-accent-bright transition-colors">
                                     <LinkIcon className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h4 className="text-white font-medium group-hover:text-purple-300 transition-colors">{res.title}</h4>
+                                    <h4 className="text-white font-medium group-hover:text-accent-bright transition-colors">{res.title}</h4>
                                     <span className="text-xs text-white/40 uppercase tracking-wider">{res.type}</span>
                                 </div>
                             </a>
@@ -172,7 +172,7 @@ const FeedbackDisplay = ({ feedback, onHome }) => {
                 </button>
                 <button
                     onClick={onHome}
-                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-8 py-3 rounded-lg font-semibold shadow-lg shadow-cyan-500/20 flex items-center gap-2 transition-all transform hover:scale-105"
+                    className="bg-gradient-to-r from-accent to-accent-deep hover:from-accent-bright hover:to-accent text-white px-8 py-3 rounded-lg font-semibold shadow-lg shadow-accent/20 flex items-center gap-2 transition-all transform hover:scale-105"
                 >
                     <RefreshCcw className="w-5 h-5" />
                     <span>Start New Session</span>

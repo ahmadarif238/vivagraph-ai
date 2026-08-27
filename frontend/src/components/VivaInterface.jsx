@@ -369,17 +369,17 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
 
             {/* Examiner Card */}
             <motion.div layout className={`glass-card p-8 md:p-10 relative overflow-hidden transition-all ${isRealTime ? 'border-green-500/30 shadow-green-900/20' : ''}`}>
-                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${isRealTime ? 'from-green-400 to-emerald-600' : 'from-cyan-400 to-purple-500'} ${speaking || rtStatus === 'speaking' ? 'animate-pulse' : ''}`} />
+                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${isRealTime ? 'from-green-400 to-emerald-600' : 'from-accent-bright to-accent'} ${speaking || rtStatus === 'speaking' ? 'animate-pulse' : ''}`} />
 
                 <div className="flex items-start gap-4 mb-6">
                     <button
                         onClick={() => !isRealTime && playAudio(currentQuestion, sessionData?.strictness)} // Disable manual play in RT
-                        className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-lg transition-colors ${speaking || rtStatus === 'speaking' ? 'bg-cyan-500 text-white shadow-cyan-500/50' : 'bg-white/10 text-cyan-400 hover:bg-white/20'}`}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-lg transition-colors ${speaking || rtStatus === 'speaking' ? 'bg-accent text-white shadow-accent/50' : 'bg-white/10 text-accent-bright hover:bg-white/20'}`}
                     >
                         <Volume2 className={`w-6 h-6 ${speaking || rtStatus === 'speaking' ? 'animate-pulse' : ''}`} />
                     </button>
                     <div className="flex-1">
-                        <h3 className={`text-sm font-semibold uppercase tracking-wider mb-2 ${isRealTime ? 'text-green-400' : 'text-cyan-400'}`}>
+                        <h3 className={`text-sm font-semibold uppercase tracking-wider mb-2 ${isRealTime ? 'text-green-400' : 'text-accent-bright'}`}>
                             {isRealTime ? `Real-Time Mode (${rtStatus})` : "Examiner Question"}
                         </h3>
                         <p className="text-2xl md:text-3xl font-light leading-relaxed text-white">
@@ -399,7 +399,7 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
                 )}
 
                 <textarea
-                    className="w-full h-32 bg-black/20 border border-white/10 rounded-xl p-4 text-lg text-white placeholder-white/20 focus:outline-none focus:border-cyan-500/50 transition-colors resize-none mb-6"
+                    className="w-full h-32 bg-black/20 border border-white/10 rounded-xl p-4 text-lg text-white placeholder-white/20 focus:outline-none focus:border-accent/50 transition-colors resize-none mb-6"
                     placeholder={isRealTime ? "Listening via Real-Time Connection..." : "Your answer will appear here as you speak..."}
                     value={transcript}
                     onChange={(e) => setTranscript(e.target.value)}
@@ -423,7 +423,7 @@ const VivaInterface = ({ sessionData, onComplete, onBack }) => {
                                 </button>
                             ) : (
                                 !isRecording && !transcript && (
-                                    <button onClick={startRecording} disabled={loading} className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/25 transition-all transform hover:scale-105">
+                                    <button onClick={startRecording} disabled={loading} className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-semibold bg-gradient-to-r from-accent to-accent-deep hover:from-accent-bright hover:to-accent text-white shadow-lg shadow-accent/25 transition-all transform hover:scale-105">
                                         <Mic className="w-6 h-6" /> <span>Tap to Speak</span>
                                     </button>
                                 )
