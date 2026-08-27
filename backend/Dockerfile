@@ -27,8 +27,9 @@ ENV HOME=/home/user \
 # Ensure cache directory exists
 RUN mkdir -p /home/user/.cache/huggingface
 
-# Expose port (Hugging Face expects 7860)
+# Hugging Face expects 7860; Render/Railway/Fly inject $PORT instead.
 EXPOSE 7860
 
-# Command to run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860"]
+# Shell form so $PORT is expanded at runtime, with 7860 as the default. This
+# makes the same image deployable on Spaces and on any PORT-injecting host.
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-7860}

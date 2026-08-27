@@ -10,16 +10,23 @@ pinecone
 supabase
 pydantic
 requests
-sentence-transformers
-langchain-huggingface
-groq
 langchain-pinecone
 python-multipart
 pypdf
 edge-tts
-faster-whisper
 websockets
 numpy
-huggingface-hub
-transformers
-scipy
+httpx
+
+# --- Deliberately NOT installed -------------------------------------------
+# sentence-transformers / transformers / torch
+#   Embeddings are served by Pinecone's hosted inference API (see
+#   app/embeddings.py). Running MiniLM locally pulled in ~2GB of dependencies
+#   and over a gigabyte of RAM, which does not fit any small free host and made
+#   cold starts slow and failure-prone. Set EMBEDDING_BACKEND=local and install
+#   `sentence-transformers langchain-huggingface` to go back to a local model.
+#
+# faster-whisper
+#   Only powers the low-latency streaming voice mode. Regular voice input uses
+#   Groq's hosted whisper-large-v3 (app/stt.py) and is unaffected. Install
+#   `faster-whisper` to re-enable streaming on a host with room for it.

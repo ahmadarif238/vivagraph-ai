@@ -3,21 +3,30 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from .db import PINECONE_INDEX_NAME, PINECONE_API_KEY
 import os
 
-# Embeddings are built lazily.
+# Embeddings are built lazily and served by Pinecone's hosted inference API.
 #
-# This used to run at import time, which meant that if sentence-transformers
-# was missing, the model download failed, or the host ran out of memory during
-# a cold start, importing `rag` raised and took the ENTIRE API down with it -
-# no health check, no error page, just a failed deploy. Retrieval is an
-# enhancement here, not a hard requirement, so a failure now degrades to
-# "no retrieved context" instead of killing the process.
+# Two problems drove this. First, building the model at import time meant that a
+# missing sentence-transformers, a failed model download, or a cold-start OOM
+# raised during import and took the ENTIRE API down -- no health check, no error
+# page, just a failed deploy. Second, running MiniLM locally pulls in torch:
+# ~2GB of dependencies and over a gigabyte of RAM, which rules out every small
+# free host.
 #
-# The Pinecone index is 384-dimensional, so the model must stay
-# all-MiniLM-L6-v2 unless the index is rebuilt.
-EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+# Pinecone already holds the vectors and embeds text server-side on the free
+# plan, so using it removes torch from the dependency tree entirely. A local
+# model is still honoured if EMBEDDING_BACKEND=local, for anyone who wants
+# offline operation.
+#
+# Retrieval is an enhancement, not a hard requirement: any failure degrades to
+# "no retrieved context" and the viva still runs.
+
+EMBEDDING_BACKEND = os.getenv("EMBEDDING_BACKEND", "pinecone").lower()
+LOCAL_EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 
 _embeddings = None
 _embeddings_failed = False
+_index_ready = False
+_effective_index = PINECONE_INDEX_NAME
 
 
 def get_embeddings():
@@ -25,10 +34,16 @@ def get_embeddings():
     global _embeddings, _embeddings_failed
     if _embeddings is not None or _embeddings_failed:
         return _embeddings
-    try:
-        from langchain_huggingface import HuggingFaceEmbeddings
 
-        _embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+    try:
+        if EMBEDDING_BACKEND == "local":
+            from langchain_huggingface import HuggingFaceEmbeddings
+
+            _embeddings = HuggingFaceEmbeddings(model_name=LOCAL_EMBEDDING_MODEL)
+        else:
+            from .embeddings import PineconeInferenceEmbeddings
+
+            _embeddings = PineconeInferenceEmbeddings(api_key=PINECONE_API_KEY)
     except Exception as exc:  # noqa: BLE001
         _embeddings_failed = True
         print(f"WARNING: embeddings unavailable ({type(exc).__name__}: {exc}). "
@@ -40,20 +55,73 @@ def get_embeddings():
 embeddings = None
 
 
+def _ensure_index():
+    """Resolve which Pinecone index to use, creating it if necessary.
+
+    The hosted embedding models are 1024-dimensional while the original local
+    MiniLM was 384, and Pinecone rejects any upsert whose dimension does not
+    match the index. Rather than silently failing against a pre-existing
+    384-d index -- or destructively deleting it -- this detects the mismatch
+    and transparently uses a dimension-suffixed index alongside it, creating
+    it on demand so a fresh deployment needs no manual console step.
+    """
+    global _index_ready, _effective_index
+    if _index_ready or EMBEDDING_BACKEND == "local" or not PINECONE_API_KEY:
+        return _effective_index
+    try:
+        from pinecone import Pinecone, ServerlessSpec
+        from .embeddings import EMBED_DIMENSION
+
+        pc = Pinecone(api_key=PINECONE_API_KEY)
+        existing = {i["name"]: i for i in pc.list_indexes()}
+        name = PINECONE_INDEX_NAME
+
+        current = existing.get(name)
+        if current is not None and current.get("dimension") != EMBED_DIMENSION:
+            name = f"{PINECONE_INDEX_NAME}-{EMBED_DIMENSION}"
+            print(f"[RAG] '{PINECONE_INDEX_NAME}' is "
+                  f"{current.get('dimension')}d but the embedding model is "
+                  f"{EMBED_DIMENSION}d; using '{name}' instead.")
+
+        if name not in existing:
+            print(f"[RAG] Creating Pinecone index '{name}' "
+                  f"({EMBED_DIMENSION}d, cosine)...")
+            pc.create_index(
+                name=name,
+                dimension=EMBED_DIMENSION,
+                metric="cosine",
+                spec=ServerlessSpec(cloud="aws", region="us-east-1"),
+            )
+            # Creation is asynchronous; wait until it accepts writes.
+            import time
+            for _ in range(60):
+                if pc.describe_index(name).status.get("ready"):
+                    break
+                time.sleep(2)
+
+        _effective_index = name
+        _index_ready = True
+    except Exception as exc:  # noqa: BLE001
+        print(f"WARNING: could not verify Pinecone index: {exc}")
+    return _effective_index
+
+
 def get_vectorstore():
     """Return a Pinecone vector store, or None if it is not usable."""
     model = get_embeddings()
     if model is None or not PINECONE_API_KEY:
         return None
+    index_name = _ensure_index()
     try:
         return PineconeVectorStore(
-            index_name=PINECONE_INDEX_NAME,
+            index_name=index_name,
             embedding=model,
             pinecone_api_key=PINECONE_API_KEY
         )
     except Exception as exc:  # noqa: BLE001
         print(f"WARNING: Pinecone vector store unavailable: {exc}")
         return None
+
 
 def retrieve_context(query: str, k: int = 3, session_id: str = None):
     vectorstore = get_vectorstore()
