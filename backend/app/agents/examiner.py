@@ -1,5 +1,4 @@
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_cerebras import ChatCerebras
 from langchain_groq import ChatGroq
 from ..models import AgentState
 from ..prompts import (
@@ -13,9 +12,16 @@ from ..rag import retrieve_context
 import os
 
 # Initialize LLM
-# Using Cerebras as primary for interviewing as requested
-llm = ChatCerebras(api_key=os.getenv("CEREBRAS_API_KEY"), model="llama3.1-8b") 
-# Fallback or alternative if Cerebras has issues: ChatGroq(model="llama3-8b-8192")
+# Migrated off Cerebras (2026-08): the Cerebras free tier now returns
+# `payment_required`, and the "llama-3.3-70b"/"llama3.1-8b" ids are gone
+# from both providers. Groq free tier still works; gpt-oss is a reasoning
+# model, so hide the chain of thought - callers json.loads() `.content`.
+llm = ChatGroq(
+    api_key=os.getenv("GROQ_API_KEY"),
+    model=os.getenv("GROQ_FAST_MODEL", "openai/gpt-oss-20b"),  # fast: question generation
+    reasoning_format="hidden",
+    reasoning_effort="low",
+)
 
 def get_persona_instructions(strictness: str):
     if strictness.lower() == "easy":
@@ -76,7 +82,11 @@ def examiner_agent(state: AgentState):
             "concept_focus": topic # Can be refined later
         }
         res = supabase.table("questions").insert(q_data).execute()
-        question_id = res.data[0]["id"]
+        # AgentState types this as Optional[str], but the DB assigns an integer
+        # primary key - passing it through raw fails pydantic validation and
+        # aborts the whole graph run. Coerce so either id style works.
+        raw_id = res.data[0]["id"] if res.data else None
+        question_id = str(raw_id) if raw_id is not None else None
     except Exception as e:
         print(f"Error saving question: {e}")
         question_id = None

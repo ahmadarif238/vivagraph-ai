@@ -1,23 +1,64 @@
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from .db import PINECONE_INDEX_NAME, PINECONE_API_KEY
 import os
 
-# Initialize Embeddings
-# Using sentence-transformers/all-MiniLM-L6-v2 as a robust local default.
-# If "llama-text-embed-v2" is required via a specific provider, that configuration should be added here.
-embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+# Embeddings are built lazily.
+#
+# This used to run at import time, which meant that if sentence-transformers
+# was missing, the model download failed, or the host ran out of memory during
+# a cold start, importing `rag` raised and took the ENTIRE API down with it -
+# no health check, no error page, just a failed deploy. Retrieval is an
+# enhancement here, not a hard requirement, so a failure now degrades to
+# "no retrieved context" instead of killing the process.
+#
+# The Pinecone index is 384-dimensional, so the model must stay
+# all-MiniLM-L6-v2 unless the index is rebuilt.
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+
+_embeddings = None
+_embeddings_failed = False
+
+
+def get_embeddings():
+    """Return the embedding model, or None if it cannot be loaded."""
+    global _embeddings, _embeddings_failed
+    if _embeddings is not None or _embeddings_failed:
+        return _embeddings
+    try:
+        from langchain_huggingface import HuggingFaceEmbeddings
+
+        _embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+    except Exception as exc:  # noqa: BLE001
+        _embeddings_failed = True
+        print(f"WARNING: embeddings unavailable ({type(exc).__name__}: {exc}). "
+              f"Retrieval will return no context; the viva still runs.")
+    return _embeddings
+
+
+# Backwards compatibility for any module that imported `embeddings` directly.
+embeddings = None
+
 
 def get_vectorstore():
-    return PineconeVectorStore(
-        index_name=PINECONE_INDEX_NAME,
-        embedding=embeddings,
-        pinecone_api_key=PINECONE_API_KEY
-    )
+    """Return a Pinecone vector store, or None if it is not usable."""
+    model = get_embeddings()
+    if model is None or not PINECONE_API_KEY:
+        return None
+    try:
+        return PineconeVectorStore(
+            index_name=PINECONE_INDEX_NAME,
+            embedding=model,
+            pinecone_api_key=PINECONE_API_KEY
+        )
+    except Exception as exc:  # noqa: BLE001
+        print(f"WARNING: Pinecone vector store unavailable: {exc}")
+        return None
 
 def retrieve_context(query: str, k: int = 3, session_id: str = None):
     vectorstore = get_vectorstore()
+    if vectorstore is None:
+        return []
     
     # CRITICAL: Only retrieve documents from the CURRENT session
     if session_id:
@@ -77,6 +118,9 @@ def index_text(text: str, metadata: dict = None):
     print(f"[RAG] Indexing {len(unique_chunks)} unique chunks")
     
     vectorstore = get_vectorstore()
+    if vectorstore is None:
+        print("[RAG] Skipping indexing - vector store unavailable.")
+        return
     if unique_chunks:
         import uuid
         # Generate explicit IDs to ensure uniqueness and traceability

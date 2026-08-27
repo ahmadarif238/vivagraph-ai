@@ -10,8 +10,6 @@ pinecone
 supabase
 pydantic
 requests
-cerebras_cloud_sdk
-langchain-cerebras
 sentence-transformers
 langchain-huggingface
 groq
@@ -19,3 +17,9 @@ langchain-pinecone
 python-multipart
 pypdf
 edge-tts
+faster-whisper
+websockets
+numpy
+huggingface-hub
+transformers
+scipy

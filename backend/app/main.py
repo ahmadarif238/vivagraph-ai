@@ -14,8 +14,10 @@ from .db import supabase
 from .stt import transcribe_audio
 from .rag import process_and_index_document
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from .routers import realtime_router
 
 app = FastAPI(title="AI Viva and Coaching Agent")
+app.include_router(realtime_router.router)
 
 # CORS
 origins = ["*"]
@@ -189,7 +191,11 @@ async def submit_answer(request: AnswerRequest):
         if current_question_id:
             res = supabase.table("answers").insert(ans_data).execute()
             if res.data:
-                answer_id = res.data[0]["id"]
+                # AgentState types this as Optional[str] while the DB assigns an
+                # integer primary key; passing it raw fails pydantic validation
+                # and aborts the graph run. Coerce so either id style works.
+                raw_answer_id = res.data[0]["id"] if res.data else None
+                answer_id = str(raw_answer_id) if raw_answer_id is not None else None
     except Exception as e:
         print(f"Error saving answer: {e}")
 

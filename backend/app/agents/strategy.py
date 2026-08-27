@@ -1,10 +1,19 @@
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_cerebras import ChatCerebras
+from langchain_groq import ChatGroq
 from ..models import AgentState
 from ..prompts import STRATEGY_PROMPT
 import os
 
-llm = ChatCerebras(api_key=os.getenv("CEREBRAS_API_KEY"), model="llama-3.3-70b") # Using 70B for reasoning
+# Migrated off Cerebras (2026-08): the Cerebras free tier now returns
+# `payment_required`, and the "llama-3.3-70b"/"llama3.1-8b" ids are gone
+# from both providers. Groq free tier still works; gpt-oss is a reasoning
+# model, so hide the chain of thought - callers json.loads() `.content`.
+llm = ChatGroq(
+    api_key=os.getenv("GROQ_API_KEY"),
+    model=os.getenv("GROQ_MODEL", "openai/gpt-oss-120b"),  # reasoning: next-action strategy
+    reasoning_format="hidden",
+    reasoning_effort="low",
+)
 
 def strategy_agent(state: AgentState):
     """
